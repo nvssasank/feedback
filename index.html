@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+</head>
+
+<body>
+  <section class="hero is-primary is-bold">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class="title" id="heading">Data Entry Form</h1>
+      </div>
+    </div>
+  </section>
+  <form id="form" class="container m-4 pl-4" method="POST">
+    <input type="hidden" id="headingInput" name="app" />
+    <div class="field">
+      <label class="label">Username</label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Your Client Name(Optional)" name="user_name" />
+      </div>
+    </div>
+    <div class="field">
+      <input type="hidden" id="currentDateTime" name="current_dateTime" />
+    </div>
+    <!-- <div class="field">
+      <label class="label">Date of Birth</label>
+      <div class="control">
+        <input class="input" type="date" placeholder="Your Date of Birth" name="DOB" />
+      </div>
+    </div> -->
+
+    <div class="field">
+      <label class="label">Feed Back</label>
+      <div class="control">
+        <textarea class="textarea" placeholder="Any additional information" name="feed_back"></textarea>
+      </div>
+    </div>
+
+    <div class="field is-grouped">
+      <div class="control">
+        <button class="button is-primary" type="submit" id="submit-button">
+          Submit
+        </button>
+      </div>
+      <!-- <div class="control">
+        <button class="button is-danger">Cancel</button>
+      </div> -->
+    </div>
+  </form>
+  <div id="message" style="
+        display: none;
+        margin: 20px;
+        font-weight: bold;
+        color: green;
+        padding: 8px;
+        background-color: beige;
+        border-radius: 4px;
+        border-color: aquamarine;
+      "></div>
+
+  <script>
+    const headingMap = {
+      'nsideas': 'Ns Ideas',
+      'esrk': 'ESRK',
+      'rc_car': 'RC Car',
+    };
+    // Set the current date and time in the hidden input field
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
+    document.getElementById('currentDateTime').value = formattedDate;
+
+    // Get the ref from the URL or default to 'Unknown App'
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref') || 'Unknown App';
+
+    // Set the heading based on the ref value (default if not found)
+    const heading = document.getElementById('heading');
+    heading.innerText = headingMap[ref] || `Feedback for ${ref}`;
+
+    // Update the hidden input field with the heading
+    document.getElementById('headingInput').value = heading.innerText;
+
+    // Update the URL without reloading the page
+    const updateURL = (ref) => {
+      const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?ref=${ref}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+    };
+    updateURL(ref);
+
+    document.getElementById("form").addEventListener("submit", function (e) {
+      e.preventDefault(); // Prevent the default form submission
+      document.getElementById("message").textContent = "Submitting..";
+      document.getElementById("message").style.display = "block";
+      document.getElementById("submit-button").disabled = true;
+
+      // Collect the form data
+      var formData = new FormData(this);
+      var keyValuePairs = [];
+      for (var pair of formData.entries()) {
+        keyValuePairs.push(pair[0] + "=" + pair[1]);
+      }
+
+      var formDataString = keyValuePairs.join("&");
+
+      // Send a POST request to your Google Apps Script
+      fetch(
+        "https://script.google.com/macros/s/AKfycbwmsM7j4f5zHLbUeCkdioQ9If9WksTrgXS4eVt2iH5LnKM-FlLiwRaQ2VNNBKZCzS0/exec",
+        {
+          redirect: "follow",
+          method: "POST",
+          body: formDataString,
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8",
+          },
+        }
+      )
+        .then(function (response) {
+          if (response) {
+            return response; // Assuming your script returns a JSON response
+          } else {
+            throw new Error("Failed to submit the form.");
+          }
+        })
+        .then(function (data) {
+          document.getElementById("message").textContent = "Data submitted successfully!";
+          document.getElementById("message").style.display = "block";
+          document.getElementById("message").style.backgroundColor = "green";
+          document.getElementById("message").style.color = "beige";
+          document.getElementById("submit-button").disabled = false;
+          document.getElementById("form").reset();
+
+          setTimeout(function () {
+            document.getElementById("message").textContent = "";
+            document.getElementById("message").style.display = "none";
+          }, 2600);
+        })
+        .catch(function (error) {
+          console.error(error);
+          document.getElementById("message").textContent =
+            "An error occurred while submitting the form.";
+          document.getElementById("message").style.display = "block";
+        });
+    });
+
+  </script>
+</body>
+
+</html>
